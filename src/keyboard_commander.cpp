@@ -13,7 +13,7 @@ std::map<char, std::vector<float>> moveBindings
   {'w', {0, 1}},
   {'s', {0, -1}},
   {'a', {1, 0}},
-  {'d', {-1, 0}},
+  {'d', {1, 0}},
 };
 
 // Map for speed keys
@@ -49,8 +49,8 @@ CTRL-C to quit
 )";
 
 // Init variables
-float torque_1(0.1); // Joint 1 torque 
-float torque_2(0.1); // Joint 2 torque
+float torque_1(2.0); // Joint 1 intial tension 
+float torque_2(0.1); // Joint 2 
 float x(0), y(0) ; // pitch/ yaw vars
 char key(' ');
 
@@ -110,6 +110,7 @@ int main(int argc, char** argv)
       x = moveBindings[key][0];
       y = moveBindings[key][1];
 
+      //todo sign is not displayed
       printf("\rCurrent: torque %f\ttorque 2 %f | Last command: %c   ", torque_1, torque_2, key);
     }
 
