@@ -13,7 +13,7 @@ std::map<char, std::vector<float>> moveBindings
   {'w', {0, 1}},
   {'s', {0, -1}},
   {'a', {1, 0}},
-  {'d', {1, 0}},
+  {'d', {-1, 0}},
 };
 
 // Map for speed keys
@@ -49,8 +49,8 @@ CTRL-C to quit
 )";
 
 // Init variables
-float torque_1(2.0); // Joint 1 intial tension 
-float torque_2(0.1); // Joint 2 
+float tension_a(2.0); // Joint 1 intial tension 
+float tension_b(0.1); // Joint 2 
 float x(0), y(0) ; // pitch/ yaw vars
 char key(' ');
 
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
   geometry_msgs::Point point;
 
   printf("%s", msg);
-  printf("\rCurrent: torque 1 %f\ttorque 2 %f | Awaiting command...\r", torque_1, torque_2);
+  printf("\rCurrent: Tension A %f\tTension B %f | Awaiting command...\r", tension_a, tension_b);
 
   while(true){
 
@@ -111,17 +111,17 @@ int main(int argc, char** argv)
       y = moveBindings[key][1];
 
       //todo sign is not displayed
-      printf("\rCurrent: torque %f\ttorque 2 %f | Last command: %c   ", torque_1, torque_2, key);
+      printf("\rCurrent: Tension A %f\tTension B %f | Last command: %c   ", tension_a, tension_b, key);
     }
 
     // Otherwise if it corresponds to a key in speedBindings
     else if (speedBindings.count(key) == 1)
     {
       // Grab the speed data
-      torque_1 = torque_1 * speedBindings[key][0];
-      torque_2 = torque_2 * speedBindings[key][1];
+      tension_a = tension_a * speedBindings[key][0];
+      tension_b = tension_b * speedBindings[key][1];
 
-      printf("\rCurrent: torque 1 %f\ttorque 2 %f | Last command: %c   ", torque_1, torque_2, key);
+      printf("\rCurrent: Tension A %f\tTension B %f | Last command: %c   ", tension_a, tension_b, key);
     }
 
     // Otherwise, set the robot to stop
@@ -137,12 +137,12 @@ int main(int argc, char** argv)
         break;
       }
 
-      printf("\rCurrent: torque 1 %f\ttorque 2 %f | Invalid command! %c", torque_1, torque_2, key);
+      printf("\rCurrent: Tension A %f\tTension B %f | Invalid command! %c", tension_a, tension_b, key);
     }
 
     // Update the Point message
-    point.x = x * torque_1;
-    point.y = y * torque_2;
+    point.x = x * tension_a;
+    point.y = y * tension_b;
 
     // Publish it and resolve any remaining callbacks
     pub.publish(point);
