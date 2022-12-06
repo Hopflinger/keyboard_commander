@@ -30,7 +30,7 @@ std::map<char, std::vector<float>> speedBindings
 // Reminder message
 const char* msg = R"(
 
-Reading from the keyboard and Publishing to Point!
+Manual Airbase Motor Voltage Keyboard Commander
 ---------------------------
 Joint 1:
    a    d    
@@ -49,8 +49,8 @@ CTRL-C to quit
 )";
 
 // Init variables
-float tension_a(2.0); // Joint 1 intial tension 
-float tension_b(0.1); // Joint 2 
+float voltage_a(0.01); // Joint 1 intial tension 
+float voltage_b(0.01); // Joint 2 
 float x(0), y(0) ; // pitch/ yaw vars
 char key(' ');
 
@@ -86,7 +86,7 @@ int getch(void)
 int main(int argc, char** argv)
 {
   // Init ROS node
-  ros::init(argc, argv, "keyboard_commander");
+  ros::init(argc, argv, "keyboard_manual");
   ros::NodeHandle nh;
 
   // Init cmd_vel publisher
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
   geometry_msgs::Point point;
 
   printf("%s", msg);
-  printf("\rCurrent: Tension A %f\tTension B %f | Awaiting command...\r", tension_a, tension_b);
+  printf("\rCurrent: Yaw Voltage  %f\tPitch Voltage  %f | Awaiting command...\r", voltage_a, voltage_b);
 
   while(true){
 
@@ -111,17 +111,17 @@ int main(int argc, char** argv)
       y = moveBindings[key][1];
 
       //todo sign is not displayed
-      printf("\rCurrent: Tension A %f\tTension B %f | Last command: %c   ", tension_a, tension_b, key);
+      printf("\rCurrent: Yaw Voltage  %f\tPitch Voltage  %f | Last command: %c   ", voltage_a, voltage_b, key);
     }
 
     // Otherwise if it corresponds to a key in speedBindings
     else if (speedBindings.count(key) == 1)
     {
       // Grab the speed data
-      tension_a = tension_a * speedBindings[key][0];
-      tension_b = tension_b * speedBindings[key][1];
+      voltage_a = voltage_a * speedBindings[key][0];
+      voltage_b = voltage_b * speedBindings[key][1];
 
-      printf("\rCurrent: Tension A %f\tTension B %f | Last command: %c   ", tension_a, tension_b, key);
+      printf("\rCurrent: Yaw Voltage  %f\tPitch Voltage  %f | Last command: %c   ", voltage_a, voltage_b, key);
     }
 
     // Otherwise, set the robot to stop
@@ -137,12 +137,12 @@ int main(int argc, char** argv)
         break;
       }
 
-      printf("\rCurrent: Tension A %f\tTension B %f | Invalid command! %c", tension_a, tension_b, key);
+      printf("\rCurrent: Yaw Voltage  %f\tPitch Voltage  %f | Invalid command! %c", voltage_a, voltage_b, key);
     }
 
     // Update the Point message
-    point.x = x * tension_a;
-    point.y = y * tension_b;
+    point.x = x * voltage_a;
+    point.y = y * voltage_b;
 
     // Publish it and resolve any remaining callbacks
     pub.publish(point);

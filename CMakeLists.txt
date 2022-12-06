@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(keyboard_commander)
+project(keyboard_manual)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -13,7 +13,7 @@ catkin_package(
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-add_executable(keyboard_commander src/keyboard_commander.cpp)
-target_link_libraries(keyboard_commander ${catkin_LIBRARIES})
+add_executable(keyboard_manual src/keyboard_manual.cpp)
+target_link_libraries(keyboard_manual ${catkin_LIBRARIES})
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")

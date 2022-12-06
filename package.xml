@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>keyboard_commander</name>
+  <name>keyboard_manual</name>
   <version>0.0.0</version>
   <description>Based On: Generic keyboard teleop for twist robots (in C++)! Based off of the teleop_twist_keyboard Python ROS node.</description>
 
