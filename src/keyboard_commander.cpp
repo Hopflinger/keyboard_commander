@@ -50,7 +50,7 @@ CTRL-C to quit
 
 // Init variables
 float tension_a(2.0); // Joint 1 intial tension 
-float tension_b(0.1); // Joint 2 
+float tension_b(2.0); // Joint 2 
 float x(0), y(0) ; // pitch/ yaw vars
 char key(' ');
 
