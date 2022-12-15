@@ -7,24 +7,13 @@
 
 #include <map>
 
-// Map for movement keys
-std::map<char, std::vector<float>> moveBindings
-{
-  {'w', {0, 1}},
-  {'s', {0, -1}},
-  {'a', {1, 0}},
-  {'d', {-1, 0}},
-};
-
 // Map for speed keys
 std::map<char, std::vector<float>> speedBindings
 {
-  {'u', {1.1, 1.1}},
-  {'j', {0.9, 0.9}},
-  {'i', {1.1, 1}},
-  {'k', {0.9, 1}},
-  {'o', {1, 1.1}},
-  {'l', {1, 0.9}}
+  {'w', {0, 2.5}},
+  {'s', {0, -2.5}},
+  {'a', {2.5, 0}},
+  {'d', {2.5, 0}},
 };
 
 // Reminder message
@@ -36,22 +25,18 @@ Joint 1:
    a    d    
 Joint 2:
    w    s    
-
+Increase relative joint angle position, linear curve.
+Position control
 
 anything else : stop
-
-u/j : increase/decrease both torques by 10%
-i/k : increase/decrease only joint 1 torque by 10%
-o/l : increase/decrease only joint 2 torque by 10%
 
 CTRL-C to quit
 
 )";
 
 // Init variables
-float tension_a(2.0); // Joint 1 intial tension 
-float tension_b(2.0); // Joint 2 
-float x(0), y(0) ; // pitch/ yaw vars
+float q1(0.0); // Joint 1 intial relative angle 
+float q2(0.0); // Joint 2 
 char key(' ');
 
 // For non-blocking keyboard inputs
@@ -96,39 +81,28 @@ int main(int argc, char** argv)
   geometry_msgs::Point point;
 
   printf("%s", msg);
-  printf("\rCurrent: Tension A %f\tTension B %f | Awaiting command...\r", tension_a, tension_b);
+  printf("\rCurrent: Delta q1 %f\tDelta q2 %f | Awaiting command...\r", q1, q2);
 
   while(true){
 
     // Get the pressed key
     key = getch();
 
-    // If the key corresponds to a key in moveBindings
-    if (moveBindings.count(key) == 1)
-    {
-      // Grab the direction data
-      x = moveBindings[key][0];
-      y = moveBindings[key][1];
-
-      //todo sign is not displayed
-      printf("\rCurrent: Tension A %f\tTension B %f | Last command: %c   ", tension_a, tension_b, key);
-    }
-
-    // Otherwise if it corresponds to a key in speedBindings
-    else if (speedBindings.count(key) == 1)
+    //if it corresponds to a key in speedBindings
+    if (speedBindings.count(key) == 1)
     {
       // Grab the speed data
-      tension_a = tension_a * speedBindings[key][0];
-      tension_b = tension_b * speedBindings[key][1];
+      q1 = q1 + speedBindings[key][0];
+      q2 = q2 + speedBindings[key][1];
 
-      printf("\rCurrent: Tension A %f\tTension B %f | Last command: %c   ", tension_a, tension_b, key);
+      printf("\rCurrent: Delta q1 %f\tDelta q2 %f | Last command: %c   ", q1, q2, key);
     }
 
     // Otherwise, set the robot to stop
     else
     {
-      x = 0;
-      y = 0;
+      q1 = 0;
+      q2 = 0;
 
       // If ctrl-C (^C) was pressed, terminate the program
       if (key == '\x03')
@@ -137,12 +111,12 @@ int main(int argc, char** argv)
         break;
       }
 
-      printf("\rCurrent: Tension A %f\tTension B %f | Invalid command! %c", tension_a, tension_b, key);
+      printf("\rCurrent: Delta q1 %f\tDelta q2 %f | Invalid command! %c", q1, q2, key);
     }
 
     // Update the Point message
-    point.x = x * tension_a;
-    point.y = y * tension_b;
+    point.x = q1;
+    point.y = q2;
 
     // Publish it and resolve any remaining callbacks
     pub.publish(point);
