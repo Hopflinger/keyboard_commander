@@ -13,7 +13,7 @@ std::map<char, std::vector<float>> speedBindings
   {'w', {0, 2.5}},
   {'s', {0, -2.5}},
   {'a', {2.5, 0}},
-  {'d', {2.5, 0}},
+  {'d', {-2.5, 0}},
 };
 
 // Reminder message
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
   geometry_msgs::Point point;
 
   printf("%s", msg);
-  printf("\rCurrent: Delta q1 %f\tDelta q2 %f | Awaiting command...\r", q1, q2);
+  printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Awaiting command...\r", q1, q2);
 
   while(true){
 
@@ -95,14 +95,14 @@ int main(int argc, char** argv)
       q1 = q1 + speedBindings[key][0];
       q2 = q2 + speedBindings[key][1];
 
-      printf("\rCurrent: Delta q1 %f\tDelta q2 %f | Last command: %c   ", q1, q2, key);
+      printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Last command: %c   ", q1, q2, key);
     }
 
     // Otherwise, set the robot to stop
     else
     {
-      q1 = 0;
-      q2 = 0;
+      //q1 = 0;
+      //q2 = 0;
 
       // If ctrl-C (^C) was pressed, terminate the program
       if (key == '\x03')
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
         break;
       }
 
-      printf("\rCurrent: Delta q1 %f\tDelta q2 %f | Invalid command! %c", q1, q2, key);
+      printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Invalid command! %c", q1, q2, key);
     }
 
     // Update the Point message
