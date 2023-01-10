@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Quaternion.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -7,24 +7,17 @@
 
 #include <map>
 
-// Map for movement keys
-std::map<char, std::vector<float>> moveBindings
-{
-  {'w', {0, 1}},
-  {'s', {0, -1}},
-  {'a', {1, 0}},
-  {'d', {-1, 0}},
-};
-
 // Map for speed keys
 std::map<char, std::vector<float>> speedBindings
 {
-  {'u', {1.1, 1.1}},
-  {'j', {0.9, 0.9}},
-  {'i', {1.1, 1}},
-  {'k', {0.9, 1}},
-  {'o', {1, 1.1}},
-  {'l', {1, 0.9}}
+  {'w', {0.05, 0.0, 0.0, 0.0}},
+  {'s', {-0.05, 0.0, 0.0, 0.0}},
+  {'e', {0.0, 0.05, 0.0, 0.0}},
+  {'d', {0.0, -0.05, 0.0, 0.0}},
+  {'u', {0.0, 0.0, 0.05, 0.0}},
+  {'j', {0.0, 0.0, -0.05, 0.0}},
+  {'i', {0.0, 0.0, 0.0, 0.05}},
+  {'k', {0.0, 0.0, 0.0, -0.05}}
 };
 
 // Reminder message
@@ -32,10 +25,10 @@ const char* msg = R"(
 
 Manual Airbase Motor Voltage Keyboard Commander
 ---------------------------
-Joint 1:
-   a    d    
-Joint 2:
-   w    s    
+Joint 1 Motors:
+   w,s  e,d      
+Joint 2 Motors:
+   u,j  i,k    
 
 
 anything else : stop
@@ -49,9 +42,10 @@ CTRL-C to quit
 )";
 
 // Init variables
-float voltage_a(0.01); // Joint 1 intial tension 
-float voltage_b(0.01); // Joint 2 
-float x(0), y(0) ; // pitch/ yaw vars
+float voltage_1(0.0); // V 1 intial  
+float voltage_2(0.0); // V 2
+float voltage_3(0.0); 
+float voltage_4(0.0);
 char key(' ');
 
 // For non-blocking keyboard inputs
@@ -90,45 +84,38 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
 
   // Init cmd_vel publisher
-  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_torque", 1);
+  ros::Publisher pub = nh.advertise<geometry_msgs::Quaternion>("cmd_torque", 1);
 
-  // Create Point message
-  geometry_msgs::Point point;
+  // Create Quaternion message
+  geometry_msgs::Quaternion command;
 
   printf("%s", msg);
-  printf("\rCurrent: Yaw Voltage  %f\tPitch Voltage  %f | Awaiting command...\r", voltage_a, voltage_b);
+  printf("\rCurrent: V1 %.3f  V2 %.3f  V3 %.3f  V4 %.3f | Awaiting command\r", voltage_1, voltage_2, voltage_3, voltage_4);
 
   while(true){
 
     // Get the pressed key
     key = getch();
 
-    // If the key corresponds to a key in moveBindings
-    if (moveBindings.count(key) == 1)
-    {
-      // Grab the direction data
-      x = moveBindings[key][0];
-      y = moveBindings[key][1];
-
-      //todo sign is not displayed
-      printf("\rCurrent: Yaw Voltage  %f\tPitch Voltage  %f | Last command: %c   ", voltage_a, voltage_b, key);
-    }
-
     // Otherwise if it corresponds to a key in speedBindings
-    else if (speedBindings.count(key) == 1)
+    if (speedBindings.count(key) == 1)
     {
       // Grab the speed data
-      voltage_a = voltage_a * speedBindings[key][0];
-      voltage_b = voltage_b * speedBindings[key][1];
+      voltage_1 = voltage_1 + speedBindings[key][0];
+      voltage_2 = voltage_2 + speedBindings[key][1];
+      voltage_3 = voltage_3 + speedBindings[key][2];
+      voltage_4 = voltage_4 + speedBindings[key][3];
 
-      printf("\rCurrent: Yaw Voltage  %f\tPitch Voltage  %f | Last command: %c   ", voltage_a, voltage_b, key);
+      printf("\rCurrent: V1 %.3f  V2 %.3f  V3 %.3f  V4 %.3f | Last command: %c   ", voltage_1, voltage_2, voltage_3, voltage_4, key);
     }
 
     // Otherwise, set the robot to stop
     else
     {
-      x = 0;
-      y = 0;
+      voltage_1 = 0;
+      voltage_2 = 0;
+      voltage_3 = 0;
+      voltage_4 = 0;
 
       // If ctrl-C (^C) was pressed, terminate the program
       if (key == '\x03')
@@ -137,15 +124,17 @@ int main(int argc, char** argv)
         break;
       }
 
-      printf("\rCurrent: Yaw Voltage  %f\tPitch Voltage  %f | Invalid command! %c", voltage_a, voltage_b, key);
+      printf("\rCurrent: V1 %.3f  V2 %.3f  V3 %.3f  V4 %.3f | Invalid command! %c", voltage_1, voltage_2, voltage_3, voltage_4, key);
     }
 
-    // Update the Point message
-    point.x = x * voltage_a;
-    point.y = y * voltage_b;
+    // Update the Quaternion message
+    command.x = voltage_1;
+    command.y = voltage_2;
+    command.z = voltage_3;
+    command.w = voltage_4;
 
     // Publish it and resolve any remaining callbacks
-    pub.publish(point);
+    pub.publish(command);
     ros::spinOnce();
   }
 
