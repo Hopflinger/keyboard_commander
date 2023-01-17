@@ -108,7 +108,7 @@ int main(int argc, char** argv)
       double dt = t - t_0;
       alpha = alpha_0 + dt * v_alpha;
       q1 = r * cos(alpha - pi/2);
-      q2 = r + r * sin(alpha - pi/2);
+      q2 = -(r + r * sin(alpha - pi/2));
 
       printf("\rDoing Circle: Delta q1 %.3f\t Delta q2 %.3f | Last command: %c   ", q1, q2, key);
     }
