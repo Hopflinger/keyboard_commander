@@ -25,8 +25,11 @@ Joint 1:
    a    d    
 Joint 2:
    w    s    
-Increase relative joint angle position, linear curve.
+Increase relative base joint angle position, linear curve.
 Position control
+
+Joint 1 relative desired pitch angle:
+   u    j
 
 anything else : stop
 
@@ -37,6 +40,8 @@ CTRL-C to quit
 // Init variables
 float q1(0.0); // Joint 1 intial relative angle 
 float q2(0.0); // Joint 2 
+float p(0.0); // lockable joint 1 relative desired pitch angle 
+
 char key(' ');
 
 // For non-blocking keyboard inputs
@@ -75,7 +80,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
 
   // Init cmd_vel publisher
-  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_torque", 1);
+  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 1);
 
   // Create Point message
   geometry_msgs::Point point;
@@ -117,6 +122,7 @@ int main(int argc, char** argv)
     // Update the Point message
     point.x = q1;
     point.y = q2;
+    point.z = p;
 
     // Publish it and resolve any remaining callbacks
     pub.publish(point);
