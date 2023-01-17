@@ -5,27 +5,18 @@
 #include <unistd.h>
 #include <termios.h>
 
-#include <map>
+# define pi           3.14159265358979323846  /* pi */
+//#include<conio.h>
+#include "keyboard.h"
 
-// Map for speed keys
-std::map<char, std::vector<float>> speedBindings
-{
-  {'w', {0, 2.5}},
-  {'s', {0, -2.5}},
-  {'a', {2.5, 0}},
-  {'d', {-2.5, 0}},
-};
 
 // Reminder message
 const char* msg = R"(
 
 Reading from the keyboard and Publishing to Point!
 ---------------------------
-Joint 1:
-   a    d    
-Joint 2:
-   w    s    
-Increase relative joint angle position, linear curve.
+start circle trajectory:
+   u    
 Position control
 
 anything else : stop
@@ -35,12 +26,20 @@ CTRL-C to quit
 )";
 
 // Init variables
+float q1_0(0.0); // Joint 1 intial  angle 
+float q2_0(0.0); // Joint 2 
 float q1(0.0); // Joint 1 intial relative angle 
 float q2(0.0); // Joint 2 
 char key(' ');
+bool trajrun = false;
+double alpha = 0.0;
+double t_0 = 0.0;
+double r = 20; //circle radius
+double v_alpha = 2.0 * pi/180;
+double alpha_0 = 0.0;
 
 // For non-blocking keyboard inputs
-int getch(void)
+/* int getch(void)
 {
   int ch;
   struct termios oldt;
@@ -66,16 +65,17 @@ int getch(void)
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
   return ch;
-}
+} */
 
 int main(int argc, char** argv)
 {
   // Init ROS node
   ros::init(argc, argv, "keyboard_commander");
   ros::NodeHandle nh;
+   init_keyboard();
 
   // Init cmd_vel publisher
-  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_torque", 1);
+  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_torque", 10);
 
   // Create Point message
   geometry_msgs::Point point;
@@ -83,26 +83,43 @@ int main(int argc, char** argv)
   printf("%s", msg);
   printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Awaiting command...\r", q1, q2);
 
+  //ros::Rate rate(100); // 100 hz
   while(true){
 
-    // Get the pressed key
-    key = getch();
+    // Get the pressed key non blcking with kbhit
+    if( _kbhit()){
+      key = _getch();
+    }
 
-    //if it corresponds to a key in speedBindings
-    if (speedBindings.count(key) == 1)
+
+    //if it corresponds to a key
+    if (key == 'u')
     {
-      // Grab the speed data
-      q1 = q1 + speedBindings[key][0];
-      q2 = q2 + speedBindings[key][1];
+      t_0 = ros::Time::now().toSec();
+      //get q0
+      trajrun = true;
 
-      printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Last command: %c   ", q1, q2, key);
+      printf("\rStarting Circle: Delta q1 %.2f\t Delta q2 %.2f | Last command: %c   ", q1, q2, key);
+      key = ' ';
+    }
+
+    if (trajrun == true){
+      double t = ros::Time::now().toSec();
+      double dt = t - t_0;
+      alpha = alpha_0 + dt * v_alpha;
+      q1 = r * cos(alpha - pi/2);
+      q2 = r + r * sin(alpha - pi/2);
+
+      printf("\rDoing Circle: Delta q1 %.3f\t Delta q2 %.3f | Last command: %c   ", q1, q2, key);
     }
 
     // Otherwise, set the robot to stop
-    else
+    if (key == 'j')
     {
-      //q1 = 0;
-      //q2 = 0;
+      trajrun = false;
+      alpha_0 = alpha;
+      key = ' ';
+
 
       // If ctrl-C (^C) was pressed, terminate the program
       if (key == '\x03')
@@ -121,7 +138,8 @@ int main(int argc, char** argv)
     // Publish it and resolve any remaining callbacks
     pub.publish(point);
     ros::spinOnce();
+    //rate.sleep();
   }
-
+  close_keyboard();
   return 0;
 }
