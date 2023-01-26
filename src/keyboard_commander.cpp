@@ -15,11 +15,13 @@ const char* msg = R"(
 
 Reading from the keyboard and Publishing to Point!
 ---------------------------
-start circle trajectory:
+start circle trajectory from bottom center
+relative to initial position:
    u    
 Position control
 
-anything else : stop
+j: pause trajectory
+anything else: restart trajectory
 
 CTRL-C to quit
 
