@@ -37,7 +37,7 @@ bool trajrun = false;
 double alpha = 0.0;
 double t_0 = 0.0;
 double r = 40; //circle radius
-double v_alpha = 3.0 * pi/180;
+double v_alpha = 3.0 * pi/180;    //deg per sec (3.0 in year end report)
 double alpha_0 = 0.0;
 
 // For non-blocking keyboard inputs
