@@ -10,10 +10,10 @@
 // Map for speed keys
 std::map<char, std::vector<float>> speedBindings
 {
-  {'w', {0, 2.5}},
-  {'s', {0, -2.5}},
-  {'a', {2.5, 0}},
-  {'d', {-2.5, 0}},
+  {'w', {0, 1.0}},
+  {'s', {0, -1.0}},
+  {'a', {1.0, 0}},
+  {'d', {-1.0, 0}},
 };
 
 // Reminder message
