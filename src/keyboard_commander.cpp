@@ -8,12 +8,15 @@
 #include <map>
 
 // Map for speed keys
+float step = 0.5;
 std::map<char, std::vector<float>> speedBindings
 {
-  {'w', {0, 2.5}},
-  {'s', {0, -2.5}},
-  {'a', {2.5, 0}},
-  {'d', {-2.5, 0}},
+  {'a', { step, 0, 0}},
+  {'d', {-step, 0, 0}},
+  {'w', {0,  step, 0}},
+  {'s', {0, -step, 0}},
+  {'i', {0, 0,  step}},
+  {'k', {0, 0, -step}},
 };
 
 // Reminder message
@@ -99,6 +102,7 @@ int main(int argc, char** argv)
       // Grab the speed data
       q1 = q1 + speedBindings[key][0];
       q2 = q2 + speedBindings[key][1];
+      p  = p  + speedBindings[key][2];
 
       printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Last command: %c   ", q1, q2, key);
     }
