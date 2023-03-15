@@ -77,7 +77,7 @@ int main(int argc, char** argv)
    init_keyboard();
 
   // Init cmd_vel publisher
-  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_torque", 10);
+  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 10);
 
   // Create Point message
   geometry_msgs::Point point;
