@@ -83,7 +83,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
 
   // Init cmd_vel publisher
-  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 1);
+  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 200);
 
   // Create Point message
   geometry_msgs::Point point;
