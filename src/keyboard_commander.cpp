@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Vector3.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -32,6 +33,8 @@ float q1_0(0.0); // Joint 1 intial  angle
 float q2_0(0.0); // Joint 2 
 float q1(0.0); // Joint 1 intial relative angle 
 float q2(0.0); // Joint 2 
+float w1(0.0);  
+float w2(0.0);  
 char key(' ');
 bool trajrun = false;
 double alpha = 0.0;
@@ -41,7 +44,7 @@ double v_alpha = 3.0 * pi/180;    //deg per sec (3.0 in year end report)
 double alpha_0 = 0.0;
 
 // For non-blocking keyboard inputs
-/* int getch(void)
+int getch(void)
 {
   int ch;
   struct termios oldt;
@@ -67,20 +70,22 @@ double alpha_0 = 0.0;
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
   return ch;
-} */
+} 
 
 int main(int argc, char** argv)
 {
   // Init ROS node
   ros::init(argc, argv, "keyboard_commander");
   ros::NodeHandle nh;
-   init_keyboard();
+  init_keyboard();
 
   // Init cmd_vel publisher
-  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 10);
+  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 200);
+  ros::Publisher velocity_pub = nh.advertise<geometry_msgs::Vector3>("cmd_velocity", 200);
 
   // Create Point message
   geometry_msgs::Point point;
+  geometry_msgs::Vector3 velocity;
 
   printf("%s", msg);
   printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Awaiting command...\r", q1, q2);
@@ -112,6 +117,9 @@ int main(int argc, char** argv)
       q1 = r * cos(alpha - pi/2);
       q2 = -(r + r * sin(alpha - pi/2));
 
+      w1 = -r * sin(alpha - pi/2) * v_alpha * 180/pi;
+      w2 = -r * cos(alpha - pi/2) * v_alpha * 180/pi;
+
       printf("\rDoing Circle: Delta q1 %.3f\t Delta q2 %.3f | Last command: %c   ", q1, q2, key);
     }
 
@@ -137,8 +145,12 @@ int main(int argc, char** argv)
     point.x = q1;
     point.y = q2;
 
+    velocity.x = w1;
+    velocity.y = w2;
+
     // Publish it and resolve any remaining callbacks
     pub.publish(point);
+    velocity_pub.publish(velocity);
     ros::spinOnce();
     //rate.sleep();
   }
