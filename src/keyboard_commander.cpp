@@ -39,7 +39,7 @@ char key(' ');
 bool trajrun = false;
 double alpha = 0.0;
 double t_0 = 0.0;
-double r = 40; //circle radius
+double r =0.5* 50; //circle radius (40 in year end report)
 double v_alpha = 3.0 * pi/180;    //deg per sec (3.0 in year end report)
 double alpha_0 = 0.0;
 
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
   printf("%s", msg);
   printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Awaiting command...\r", q1, q2);
 
-  //ros::Rate rate(100); // 100 hz
+  ros::Rate rate(500); // 100 hz
   while(true){
 
     // Get the pressed key non blcking with kbhit
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
     pub.publish(point);
     velocity_pub.publish(velocity);
     ros::spinOnce();
-    //rate.sleep();
+    rate.sleep();
   }
   close_keyboard();
   return 0;
