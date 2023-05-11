@@ -39,7 +39,7 @@ char key(' ');
 bool trajrun = false;
 double alpha = 0.0;
 double t_0 = 0.0;
-double r =0.5* 50; //circle radius (40 in year end report)
+double r =0.5* 40; //circle radius (40 in year end report)
 double v_alpha = 3.0 * pi/180;    //deg per sec (3.0 in year end report)
 double alpha_0 = 0.0;
 
