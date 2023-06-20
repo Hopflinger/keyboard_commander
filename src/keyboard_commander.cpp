@@ -8,7 +8,7 @@
 #include <map>
 
 // Map for speed keys
-float step = 1.0;
+float step = 0.5;
 std::map<char, std::vector<float>> speedBindings
 {
   {'a', { step, 0, 0}},
