@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <geometry_msgs/Point.h>
+#include <geometry_msgs/QuaternionStamped.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -11,12 +11,14 @@
 float step = 0.5;
 std::map<char, std::vector<float>> speedBindings
 {
-  {'a', { step, 0, 0}},
-  {'d', {-step, 0, 0}},
-  {'w', {0,  step, 0}},
-  {'s', {0, -step, 0}},
-  {'u', {0, 0,  step}},
-  {'j', {0, 0, -step}},
+  {'a', { step, 0, 0, 0}},
+  {'d', {-step, 0, 0, 0}},
+  {'w', {0,  step, 0, 0}},
+  {'s', {0, -step, 0, 0}},
+  {'u', {0, 0,  step, 0}},
+  {'j', {0, 0, -step, 0}},
+  {'i', {0, 0, 0,  step}},
+  {'k', {0, 0, 0, -step}},
 };
 
 // Reminder message
@@ -33,6 +35,8 @@ Position control
 
 Joint 1 relative desired pitch angle:
    u    j
+Joint 2 relative desired pitch angle:
+   i    k
 
 anything else : stop
 
@@ -44,6 +48,7 @@ CTRL-C to quit
 float q1(0.0); // Joint 1 intial relative angle 
 float q2(0.0); // Joint 2 
 float p(0.0); // lockable joint 1 relative desired pitch angle 
+float p2(0.0);// lockable joint 2 relative desired pitch angle 
 
 char key(' ');
 
@@ -83,13 +88,14 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
 
   // Init cmd_vel publisher
-  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 200);
+  ros::Publisher pub = nh.advertise<geometry_msgs::QuaternionStamped>("cmd_pose", 200);
 
   // Create Point message
-  geometry_msgs::Point point;
+  geometry_msgs::QuaternionStamped point;
+  point.header.stamp = ros::Time::now();
 
   printf("%s", msg);
-  printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f\t Delta p %.2f | Awaiting command...\r", q1, q2, p);
+  printf("\rCurrent: Delta q1 %.2f \t Delta q2 %.2f \t Delta p1 %.2f \t Delta p2 %.2f | Awaiting command...\r", q1, q2, p, p2);
 
   while(true){
 
@@ -103,15 +109,14 @@ int main(int argc, char** argv)
       q1 = q1 + speedBindings[key][0];
       q2 = q2 + speedBindings[key][1];
       p  = p  + speedBindings[key][2];
+      p2 = p2  + speedBindings[key][3];
 
-      printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f\t Delta p %.2f | Last command: %c   ", q1, q2, p, key);
+      printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f\t Delta p1 %.2f \t Delta p2 %.2f  | Last command: %c   ", q1, q2, p, p2, key);
     }
 
     // Otherwise, set the robot to stop
     else
     {
-      //q1 = 0;
-      //q2 = 0;
 
       // If ctrl-C (^C) was pressed, terminate the program
       if (key == '\x03')
@@ -120,13 +125,14 @@ int main(int argc, char** argv)
         break;
       }
 
-      printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f\t Delta p %.2f | Invalid command! %c", q1, q2, p, key);
+      printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f\t Delta p %.2f \t Delta p2 %.2f | Invalid command! %c", q1, q2, p, p2, key);
     }
 
     // Update the Point message
-    point.x = q1;
-    point.y = q2;
-    point.z = p;
+    point.quaternion.x = q1;
+    point.quaternion.y = q2;
+    point.quaternion.z = p;
+    point.quaternion.w = p2;
 
     // Publish it and resolve any remaining callbacks
     pub.publish(point);
