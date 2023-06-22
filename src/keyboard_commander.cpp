@@ -1,6 +1,6 @@
 #include <ros/ros.h>
-#include <geometry_msgs/Point.h>
 #include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/QuaternionStamped.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -80,12 +80,14 @@ int main(int argc, char** argv)
   init_keyboard();
 
   // Init cmd_vel publisher
-  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 200);
+  ros::Publisher pub = nh.advertise<geometry_msgs::QuaternionStamped>("cmd_pose", 200);
   ros::Publisher velocity_pub = nh.advertise<geometry_msgs::Vector3>("cmd_velocity", 200);
 
   // Create Point message
-  geometry_msgs::Point point;
+  geometry_msgs::QuaternionStamped point;
+  point.header.stamp = ros::Time::now();
   geometry_msgs::Vector3 velocity;
+
 
   printf("%s", msg);
   printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Awaiting command...\r", q1, q2);
@@ -142,8 +144,10 @@ int main(int argc, char** argv)
     }
 
     // Update the Point message
-    point.x = q1;
-    point.y = q2;
+    point.quaternion.x = q1;
+    point.quaternion.y = q2;
+    point.quaternion.z = 0.0;
+    point.quaternion.w = 0.0;
 
     velocity.x = w1;
     velocity.y = w2;
