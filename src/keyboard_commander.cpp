@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Vector3.h>
+#include "std_msgs/Bool.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -10,36 +11,43 @@
 //#include<conio.h>
 #include "keyboard.h"
 
-
 // Reminder message
 const char* msg = R"(
 
-Reading from the keyboard and Publishing to Point!
----------------------------
-start circle trajectory from bottom center
-relative to initial position:
-   u    
-Position control
+Airbase Circle Trajectory Commander
+------------------------------------------
+-Circle from bottom center relative to initial position
+-Position control
 
-j: pause trajectory
-anything else: restart trajectory
+g: Set current position as desired
+
+Arm:  A    (Check that q_des correct before)
+Disarm:  a or A
+
+Start: u    
+
+Pause trajectory: j 
 
 CTRL-C to quit
 
 )";
 
 // Init variables
-float q1_0(0.0); // Joint 1 intial  angle 
-float q2_0(0.0); // Joint 2 
-float q1(0.0); // Joint 1 intial relative angle 
-float q2(0.0); // Joint 2 
+bool armed = false;
+bool error_warn = false;
+float q[2] = {0, 0};
+float rel_q_des[2] = {0, 0};
+float q1_des_0(0.0); // Joint 1 intial des angle 
+float q2_des_0(0.0); // Joint 2 
+float q1_des(0.0); // Joint 1 desired angle abs
+float q2_des(0.0); // Joint 2 
 float w1(0.0);  
 float w2(0.0);  
 char key(' ');
 bool trajrun = false;
 double alpha = 0.0;
 double t_0 = 0.0;
-double r =1.0* 40; //circle radius (40 in year end report)
+double r = 1.0* 40; //circle radius (40 in year end report)
 double v_alpha = 3.0 * pi/180;    //deg per sec (3.0 in year end report)
 double alpha_0 = 0.0;
 
@@ -72,6 +80,11 @@ int getch(void)
   return ch;
 } 
 
+void jointAngleCallback(const geometry_msgs::Point::ConstPtr& msg){ 
+    q[0] = msg->x;
+    q[1] = msg->y;
+}  
+
 int main(int argc, char** argv)
 {
   // Init ROS node
@@ -79,34 +92,68 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   init_keyboard();
 
+  ros::Subscriber jointAngle_sub = nh.subscribe("joint_angles", 100, &jointAngleCallback);
+
   // Init cmd_vel publisher
-  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 200);
-  ros::Publisher velocity_pub = nh.advertise<geometry_msgs::Vector3>("cmd_velocity", 200);
+  ros::Publisher pub = nh.advertise<geometry_msgs::Point>("cmd_pose", 100);
+  ros::Publisher velocity_pub = nh.advertise<geometry_msgs::Vector3>("cmd_velocity", 100);
+  ros::Publisher arm_pub = nh.advertise<std_msgs::Bool>("arm_cmd", 10);
 
   // Create Point message
   geometry_msgs::Point point;
   geometry_msgs::Vector3 velocity;
-
-  printf("%s", msg);
-  printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Awaiting command...\r", q1, q2);
+  std_msgs::Bool arm_msg;  
 
   ros::Rate rate(500); // 100 hz
   while(true){
+
 
     // Get the pressed key non blcking with kbhit
     if( _kbhit()){
       key = _getch();
     }
 
-
     //if it corresponds to a key
-    if (key == 'u')
-    {
+    if (key == 'A' && !armed){
+
+      if ( abs(q1_des-q[0]) > 4.0 || abs(q2_des-q[1]) > 4.0  )
+      {
+        error_warn = true;
+      }
+      else{
+        armed = true;      
+        arm_msg.data = armed;
+        arm_pub.publish(arm_msg);
+        printf("\rArming____________________________________");
+      }
+
+      key = ' ';
+    }
+    
+    if ((key == 'a' || key == 'A') && armed){
+      armed = false;
+      arm_msg.data = armed;
+      arm_pub.publish(arm_msg);
+      trajrun = false;
+      alpha_0 = alpha;
+
+      printf("\rDisarming____________________________________");
+      key = ' ';
+    }
+
+    if (key == 'g' && !armed && !trajrun){
+      q1_des_0 = q[0];
+      q2_des_0 = q[1];
+      printf("\nSet current Point as Desired____________________________________");
+      printf("\n ");
+      key = ' ';
+    }
+
+    if (key == 'u' && armed){
       t_0 = ros::Time::now().toSec();
       //get q0
       trajrun = true;
 
-      printf("\rStarting Circle: Delta q1 %.2f\t Delta q2 %.2f | Last command: %c   ", q1, q2, key);
       key = ' ';
     }
 
@@ -114,16 +161,17 @@ int main(int argc, char** argv)
       double t = ros::Time::now().toSec();
       double dt = t - t_0;
       alpha = alpha_0 + dt * v_alpha;
-      q1 = r * cos(alpha - pi/2);
-      q2 = -(r + r * sin(alpha - pi/2));
+      rel_q_des[0] = r * cos(alpha - pi/2);
+      rel_q_des[1] = -(r + r * sin(alpha - pi/2));
+
 
       w1 = -r * sin(alpha - pi/2) * v_alpha * 180/pi;
       w2 = -r * cos(alpha - pi/2) * v_alpha * 180/pi;
 
-      printf("\rDoing Circle: Delta q1 %.3f\t Delta q2 %.3f | Last command: %c   ", q1, q2, key);
+      printf("\rDoing Circle");
     }
 
-    // Otherwise, set the robot to stop
+    //set the robot to stop
     if (key == 'j')
     {
       trajrun = false;
@@ -134,16 +182,38 @@ int main(int argc, char** argv)
       // If ctrl-C (^C) was pressed, terminate the program
       if (key == '\x03')
       {
+        armed = false;
         printf("\n\n                 .     .\n              .  |\\-^-/|  .    \n             /| } O.=.O { |\\\n\n                 CH3EERS\n\n");
         break;
       }
 
-      printf("\rCurrent: Delta q1 %.2f\t Delta q2 %.2f | Invalid command! %c", q1, q2, key);
     }
 
+    q1_des = q1_des_0 + rel_q_des[0];
+    q2_des = q2_des_0 + rel_q_des[1];
+
+    printf("%s", msg);
+
+    if (armed){
+      printf("\nStatus: ARMED");
+    }
+    else{
+      printf("\nStatus: Disarmed");
+    }
+    printf("\nCurrent:   q1: %.2f\t q2: %.2f ", q[0], q[1]); 
+    printf("\nDesired:   q1: %.2f\t q2: %.2f ", q1_des, q2_des);    
+    printf("\nRel.Des.:  q1: %.2f\t q2: %.2f \t| Last command: %c   ", rel_q_des[0], rel_q_des[1], key);
+
+    if (error_warn){
+      printf("\nWarning: Large Delta between Set and Current Position: Arming Disabled");
+    }
+
+    printf("\n ");
+
+
     // Update the Point message
-    point.x = q1;
-    point.y = q2;
+    point.x = q1_des;
+    point.y = q2_des;
 
     velocity.x = w1;
     velocity.y = w2;
