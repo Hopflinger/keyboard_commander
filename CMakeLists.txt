@@ -7,11 +7,11 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
-  INCLUDE_DIRS src
+  INCLUDE_DIRS src include
   CATKIN_DEPENDS roscpp geometry_msgs
 )
 
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(keyboard_commander src/keyboard_commander.cpp)
 target_link_libraries(keyboard_commander ${catkin_LIBRARIES})
