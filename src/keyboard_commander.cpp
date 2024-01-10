@@ -21,8 +21,8 @@ Airbase Circle Trajectory Commander
 
 g: Set current position as desired
 
-Arm:  A    (Check that q_des correct before)
-Disarm:  a or A
+Arm:  P    (Check that q_des correct before)
+Disarm:  p or P
 
 Start: u    
 
@@ -114,13 +114,14 @@ int main(int argc, char** argv)
     }
 
     //if it corresponds to a key
-    if (key == 'A' && !armed){
+    if (key == 'P' && !armed){
 
       if ( abs(q1_des-q[0]) > 4.0 || abs(q2_des-q[1]) > 4.0  )
       {
         error_warn = true;
       }
       else{
+        error_warn = false;
         armed = true;      
         arm_msg.data = armed;
         arm_pub.publish(arm_msg);
@@ -130,7 +131,7 @@ int main(int argc, char** argv)
       key = ' ';
     }
     
-    if ((key == 'a' || key == 'A') && armed){
+    if ((key == 'p' || key == 'P') && armed){
       armed = false;
       arm_msg.data = armed;
       arm_pub.publish(arm_msg);
@@ -200,9 +201,9 @@ int main(int argc, char** argv)
     else{
       printf("\nStatus: Disarmed");
     }
-    printf("\nCurrent:   q1: %.2f\t q2: %.2f ", q[0], q[1]); 
-    printf("\nDesired:   q1: %.2f\t q2: %.2f ", q1_des, q2_des);    
-    printf("\nRel.Des.:  q1: %.2f\t q2: %.2f \t| Last command: %c   ", rel_q_des[0], rel_q_des[1], key);
+    printf("\nCurrent:   q1: %.1f\t q2: %.1f ", q[0], q[1]); 
+    printf("\nDesired:   q1: %.1f\t q2: %.1f ", q1_des, q2_des);    
+    printf("\nRel.Des.:  q1: %.1f\t q2: %.1f \t| Last command: %c   ", rel_q_des[0], rel_q_des[1], key);
 
     if (error_warn){
       printf("\nWarning: Large Delta between Set and Current Position: Arming Disabled");
