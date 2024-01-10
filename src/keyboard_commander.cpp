@@ -149,7 +149,7 @@ int main(int argc, char** argv)
     }
 
     //if it corresponds to a key in speedBindings
-    if (speedBindings.count(key) == 1)
+    if (speedBindings.count(key) == 1  && armed)
     {
       // Grab the pos data
       q1_des = q1_des_0 + q1_des + speedBindings[key][0];
